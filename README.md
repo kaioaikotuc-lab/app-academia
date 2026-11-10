@@ -86,3 +86,7 @@ select s.user_id, s.id, (select id from academia.exercicios where nome='Supino r
   sincronizada, adicione em `TABELAS` no `store.js` (respeitando a ordem das FKs) e crie RLS `dono`.
 - Mudou arquivos do app: aumente `VERSAO` em `docs/sw.js` (e `config.js`), commit e push → Pages publica sozinho.
 - Teste: `cd docs && python3 -m http.server 8765` e `python3 tests/e2e.py`.
+
+## Conta de demonstração e testes
+- Conta demo: `demo.academia.kaio@example.com` (senha só em `conta-teste.txt`, fora do git).
+- Semana simulada 02–08/11/2026: `tests/demo_fase1.py`, `demo_fase1b.py`, `demo_fase2.py`, `demo_fase3.py` (app publicado, 390px), treino de sábado pelo chat, `sql/demo_backdate.sql` (move as sessões feitas "hoje" para as datas da semana), `tests/demo_fase4.py` (conferência + screenshots em `screens/`).

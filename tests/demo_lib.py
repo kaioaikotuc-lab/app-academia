@@ -5,7 +5,7 @@ def cred():
     t = open("/workspace/app-academia/conta-teste.txt").read()
     return re.search(r"E-mail: (\S+)", t).group(1), re.search(r"Senha: (\S+)", t).group(1)
 class App:
-    def __init__(self, p, perfil_dir="/tmp/pw-demo2"):
+    def __init__(self, p, perfil_dir="/tmp/pw-final"):
         self.ctx = p.chromium.launch_persistent_context(perfil_dir, channel="chrome", headless=True,
             viewport={"width": 390, "height": 844}, device_scale_factor=2, accept_downloads=True)
         self.pg = self.ctx.pages[0] if self.ctx.pages else self.ctx.new_page()

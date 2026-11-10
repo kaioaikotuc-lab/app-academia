@@ -2,3 +2,4 @@ tests/*.png
 __pycache__/
 conta-teste.txt
 screens/tmp
+screens/
