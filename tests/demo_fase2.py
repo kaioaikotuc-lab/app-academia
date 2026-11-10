@@ -27,7 +27,6 @@ with sync_playwright() as p:
     pg.mouse.click(5, 300); a.esperar_sync(); time.sleep(1)
     R["perfil_kpis"] = pg.inner_text(".kpis").replace("\n", " ")
     a.nav("fichas"); pg.locator(".card", has_text="Treino A").click(); time.sleep(0.6)
-    pg.locator(".exbloco", has_text="Crucifixo").locator("[data-act=mover][data-v='-1']").click(); time.sleep(0.5)
     R["ordem_A"] = [t.split(". ",1)[1] for t in pg.locator(".exbloco .exhead .t").all_inner_texts()]
     # seg 02 — Treino A
     R["seg"] = treino(a, "Peito", SEG_A)[:200]

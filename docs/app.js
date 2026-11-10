@@ -419,7 +419,7 @@
       });
       toast("Fichas A/B/C criadas. Ajuste como quiser!");
     },
-    "add-ex-ficha": (el) => escolherExercicio((exId) => S.salvar("ficha_exercicios", { ficha_id: el.dataset.id, exercicio_id: exId, ordem: Q.itensFicha(el.dataset.id).length, series: 3, reps_alvo: "10", descanso_seg: 90 })),
+    "add-ex-ficha": (el) => escolherExercicio((exId) => S.salvar("ficha_exercicios", { ficha_id: el.dataset.id, exercicio_id: exId, ordem: Math.max(-1, ...Q.itensFicha(el.dataset.id).map((i) => i.ordem)) + 1, series: 3, reps_alvo: "10", descanso_seg: 90 })),
     mover: (el) => {
       const it = S.get("ficha_exercicios", el.dataset.id); const itens = Q.itensFicha(it.ficha_id);
       const i = itens.findIndex((x) => x.id === it.id), j = i + +el.dataset.v; if (j < 0 || j >= itens.length) return;
