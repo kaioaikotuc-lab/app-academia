@@ -195,6 +195,7 @@
     return `<h2>Fichas de treino</h2>
       ${fs.map((f) => `<button class="card" data-go="ficha/${f.id}"><div class="t">${esc(f.nome)}</div><div class="sub">${Q.itensFicha(f.id).map((i) => esc(S.get("exercicios", i.exercicio_id)?.nome)).join(", ") || "sem exercícios"}</div></button>`).join("") || `<p class="vazio">Nenhuma ficha ainda.</p>`}
       <button class="btn" data-act="nova-ficha">+ Nova ficha</button>
+      <button class="btn sec" data-go="exercicios">📚 Biblioteca de exercícios</button>
       ${fs.length === 0 ? `<button class="btn sec" data-act="modelo-abc">Criar modelo pronto A/B/C</button>` : ""}`;
   };
 
@@ -266,8 +267,10 @@
 
   telas.progresso = (exId) => {
     if (!exId) {
-      const usados = Q.exercicios().filter((e) => Q.historicoEx(e.id).length);
-      return `<h2>Evolução</h2>${usados.length ? usados.map((e) => { const pr = Q.recordes(e.id); return `<button class="card" data-go="progresso/${e.id}"><div class="t">${esc(e.nome)}</div><div class="sub">PR ${fmtKg(pr.maxCarga)} · 1RM est. ${fmtKg(pr.max1rm)}</div></button>`; }).join("") : `<p class="vazio">Registre treinos para ver sua evolução.</p>`}`;
+      const usados = Q.exercicios().map((e) => ({ e, h: Q.historicoEx(e.id) })).filter((x) => x.h.length)
+        .sort((a, b) => b.h[0].sessao.iniciada_em.localeCompare(a.h[0].sessao.iniciada_em) || a.e.nome.localeCompare(b.e.nome));
+      return `<h2>Evolução</h2><p class="sub">Mais recentes primeiro. Toque para ver o gráfico.</p>${usados.length ? usados.map(({ e, h }) => { const pr = Q.recordes(e.id); const maxReps = Math.max(...h.flatMap((g) => g.series.map((r) => r.reps)));
+        return `<button class="card" data-go="progresso/${e.id}"><div class="t">${esc(e.nome)}</div><div class="sub">${pr.maxCarga ? `PR ${fmtKg(pr.maxCarga)} · 1RM est. ${fmtKg(pr.max1rm)}` : `Sem carga · máx. ${maxReps} reps`} · último: ${fmtData(h[0].sessao.iniciada_em)}</div></button>`; }).join("") : `<p class="vazio">Registre treinos para ver sua evolução.</p>`}`;
     }
     const ex = S.get("exercicios", exId);
     const h = Q.historicoEx(exId).reverse();
@@ -288,10 +291,12 @@
     const vals = pts.flatMap((p) => [p.carga, p.rm]);
     let mn = Math.min(...vals), mx = Math.max(...vals);
     if (mx === mn) { mx += 5; mn = Math.max(0, mn - 5); }
-    const x = (i) => P + (pts.length === 1 ? (W - 2 * P) / 2 : (i * (W - 2 * P)) / (pts.length - 1));
+    const t0 = new Date(pts[0].d).getTime(), t1 = new Date(pts[pts.length - 1].d).getTime();
+    const x = (i) => P + (t1 === t0 ? (W - 2 * P) / 2 : ((new Date(pts[i].d).getTime() - t0) * (W - 2 * P)) / (t1 - t0));
+    const rot = (v) => (mx - mn < 6 ? v.toFixed(1).replace(".", ",") : Math.round(v));
     const y = (v) => H - P + 10 - ((v - mn) / (mx - mn)) * (H - 2 * P);
     const linha = (k, cls) => `<polyline class="${cls}" points="${pts.map((p, i) => `${x(i)},${y(p[k])}`).join(" ")}"/>` + pts.map((p, i) => `<circle class="${cls}" cx="${x(i)}" cy="${y(p[k])}" r="3"/>`).join("");
-    const ticks = [mn, (mn + mx) / 2, mx].map((v) => `<text x="2" y="${y(v) + 4}">${Math.round(v)}</text><line x1="${P}" x2="${W - 5}" y1="${y(v)}" y2="${y(v)}"/>`).join("");
+    const ticks = [mn, (mn + mx) / 2, mx].map((v) => `<text x="2" y="${y(v) + 4}">${rot(v)}</text><line x1="${P}" x2="${W - 5}" y1="${y(v)}" y2="${y(v)}"/>`).join("");
     const datas = [0, pts.length - 1].filter((v, i, a) => a.indexOf(v) === i).map((i) => `<text x="${Math.min(W - 40, Math.max(P - 10, x(i) - 18))}" y="${H - 2}">${new Date(pts[i].d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</text>`).join("");
     return `<svg class="graf" viewBox="0 0 ${W} ${H}">${ticks}${datas}${unico ? "" : linha("rm", "l2")}${linha("carga", "l1")}</svg>`;
   }
@@ -452,7 +457,7 @@
     },
     exportar: () => {
       const linhas = [["data", "treino", "exercicio", "grupo", "serie", "carga_kg", "reps", "1rm_estimado"]];
-      Q.sessoes().forEach((s) => Q.seriesSessao(s.id).filter((r) => r.feita).forEach((r) => { const e = S.get("exercicios", r.exercicio_id); linhas.push([s.iniciada_em, s.nome, e?.nome, e?.grupo, r.numero, r.carga_kg, r.reps, rm1(r.carga_kg, r.reps).toFixed(1)]); }));
+      Q.sessoes().forEach((s) => Q.seriesSessao(s.id).filter((r) => r.feita).forEach((r) => { const e = S.get("exercicios", r.exercicio_id); linhas.push([new Date(s.iniciada_em).toLocaleString("pt-BR"), s.nome, e?.nome, e?.grupo, r.numero, r.carga_kg, r.reps, rm1(r.carga_kg, r.reps).toFixed(1)]); }));
       const csv = linhas.map((l) => l.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv" })); a.download = "treinos.csv"; a.click();
     },
@@ -490,7 +495,7 @@
     main().innerHTML = fn(arg);
     if (render._ultima === location.hash) window.scrollTo(0, y); else window.scrollTo(0, 0);
     render._ultima = location.hash;
-    document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.go === (nome === "ficha" ? "fichas" : nome === "sessao" ? "historico" : nome === "ativo" ? "treinar" : nome === "conta" ? "perfil" : nome)));
+    document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.go === (nome === "ficha" ? "fichas" : nome === "sessao" ? "historico" : nome === "ativo" ? "treinar" : nome === "conta" ? "perfil" : nome === "exercicios" ? "fichas" : nome)));
     atualizarStatus();
     const busca = $("#busca-ex");
     if (busca) busca.oninput = (e) => { telas.exercicios.busca = e.target.value; const pos = e.target.selectionStart; main().innerHTML = telas.exercicios(); const b = $("#busca-ex"); b.focus(); b.setSelectionRange(pos, pos); render(); };

@@ -5,7 +5,7 @@ def cred():
     t = open("/workspace/app-academia/conta-teste.txt").read()
     return re.search(r"E-mail: (\S+)", t).group(1), re.search(r"Senha: (\S+)", t).group(1)
 class App:
-    def __init__(self, p, perfil_dir="/tmp/pw-demo"):
+    def __init__(self, p, perfil_dir="/tmp/pw-demo2"):
         self.ctx = p.chromium.launch_persistent_context(perfil_dir, channel="chrome", headless=True,
             viewport={"width": 390, "height": 844}, device_scale_factor=2, accept_downloads=True)
         self.pg = self.ctx.pages[0] if self.ctx.pages else self.ctx.new_page()
@@ -44,3 +44,12 @@ class App:
                 row = self.bloco(ex).locator(".serie:not(.cab)").nth(i)
                 if "feita" not in (row.get_attribute("class") or ""):
                     row.locator(".check").click(); time.sleep(0.25)
+def abrir(a):
+    pg = a.pg; pg.goto(URL); time.sleep(2)
+    if pg.is_visible("#f-login"):
+        E, S = cred(); pg.fill("input[name=email]", E); pg.fill("input[name=senha]", S); pg.click("button[value=entrar]")
+    pg.wait_for_selector("nav button.on"); a.esperar_sync()
+    return pg.evaluate("APP_CONFIG.VERSAO")
+def item(a, ex, campo, v):
+    el = a.pg.locator(".exbloco", has_text=ex).first.locator(f"[data-item={campo}]")
+    el.fill(v); el.dispatch_event("change"); time.sleep(0.3)

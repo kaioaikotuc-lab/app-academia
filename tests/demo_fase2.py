@@ -20,7 +20,7 @@ def treino(a, ficha_desc, plano, extra=None, shot=None):
     return a.main()
 with sync_playwright() as p:
     a = App(p); pg = a.pg
-    pg.goto(URL); pg.wait_for_selector("nav button.on"); a.esperar_sync()
+    R["versao"] = abrir(a)
     a.nav("perfil")
     for campo, v in (("idade", "28"), ("meta_peso_kg", "75")):
         el = pg.locator(f"[data-perfil={campo}]"); el.fill(v); el.dispatch_event("change"); time.sleep(0.3)
@@ -45,5 +45,6 @@ with sync_playwright() as p:
     QUA_C["Abdominal supra"] = [(0,20),(0,20),(0,15)]
     R["qua"] = treino(a, "Pernas", QUA_C, extra=extra_c)[:200]
     R["sync"] = a.esperar_sync(); R["erros"] = a.erros
+    R["contagem"] = pg.evaluate("Store.lista('sessoes').map(s=>[s.nome, Store.lista('series',r=>r.sessao_id===s.id&&r.feita).length, Store.lista('series',r=>r.sessao_id===s.id&&r.feita).reduce((a,r)=>a+r.carga_kg*r.reps,0)])")
     a.ctx.close()
 for k, v in R.items(): print(k, "=>", v if not isinstance(v, str) else v.replace("\n", " | ")[:300])
