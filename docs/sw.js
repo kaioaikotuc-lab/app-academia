@@ -1,6 +1,6 @@
 // Service worker: deixa o app abrir offline (cache do "casco" do app).
 // Ao mudar arquivos, aumente a VERSAO para os aparelhos atualizarem.
-const VERSAO = "academia-v1.0.0";
+const VERSAO = "academia-v1.0.1";
 const ARQUIVOS = ["./", "index.html", "styles.css", "config.js", "store.js", "app.js", "vendor/supabase.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(ARQUIVOS))); self.skipWaiting(); });

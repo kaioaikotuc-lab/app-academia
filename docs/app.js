@@ -304,7 +304,7 @@
       if (!p?.idade) return null;
       if (!p.idade_em) return p.idade;
       const anos = (Date.now() - new Date(p.idade_em + "T12:00:00")) / (365.25 * 864e5);
-      return p.idade + Math.floor(anos);
+      return p.idade + Math.max(0, Math.floor(anos));
     },
     imc: (peso, alturaCm) => (peso && alturaCm ? peso / Math.pow(alturaCm / 100, 2) : null),
     faixa(imc) {
