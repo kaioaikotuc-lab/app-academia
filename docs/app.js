@@ -507,21 +507,33 @@
     const a = e.target.closest("[data-act]");
     if (a && acoes[a.dataset.act]) acoes[a.dataset.act](a);
   });
+  // Edição de campos: salva sem redesenhar (não fecha o teclado nem perde o próximo toque).
+  // A tela só é redesenhada quando nenhum campo estiver em foco.
+  const SIL = { silencioso: true };
   document.addEventListener("change", (e) => {
     const el = e.target;
-    if (el.dataset.campo) S.salvar("series", { id: el.dataset.id, [el.dataset.campo]: el.dataset.campo === "reps" ? Math.round(num(el.value)) : num(el.value) });
-    else if (el.dataset.ficha) S.salvar("fichas", { id: el.dataset.id, [el.dataset.ficha]: el.value });
-    else if (el.dataset.item) S.salvar("ficha_exercicios", { id: el.dataset.id, [el.dataset.item]: el.dataset.item === "reps_alvo" ? el.value : parseInt(el.value) || 0 });
+    if (el.dataset.campo) S.salvar("series", { id: el.dataset.id, [el.dataset.campo]: el.dataset.campo === "reps" ? Math.round(num(el.value)) : num(el.value) }, SIL);
+    else if (el.dataset.ficha) S.salvar("fichas", { id: el.dataset.id, [el.dataset.ficha]: el.value }, SIL);
+    else if (el.dataset.item) S.salvar("ficha_exercicios", { id: el.dataset.id, [el.dataset.item]: el.dataset.item === "reps_alvo" ? el.value : parseInt(el.value) || 0 }, SIL);
     else if (el.dataset.perfil) {
       const k = el.dataset.perfil; const v = k === "nome" ? el.value : num(el.value) || null;
       const extra = k === "idade" ? { idade: v ? Math.round(v) : null, idade_em: hojeISO() } : { [k]: v };
-      S.salvar("perfis", Object.assign({ id: S.user.id, user_id: S.user.id }, extra));
+      S.salvar("perfis", Object.assign({ id: S.user.id, user_id: S.user.id }, extra), SIL);
     }
-    else if (el.dataset.notas) S.salvar("sessoes", { id: el.dataset.notas, notas: el.value });
-    setTimeout(render, 0);
+    else if (el.dataset.notas) S.salvar("sessoes", { id: el.dataset.notas, notas: el.value }, SIL);
+    else return;
+    renderQuandoLivre();
   });
+  function renderQuandoLivre() {
+    clearTimeout(renderQuandoLivre._t);
+    renderQuandoLivre._t = setTimeout(() => {
+      const f = document.activeElement;
+      if (f && f.matches("input,textarea") && main().contains(f)) return; // ainda digitando: espera o próximo blur
+      render();
+    }, 350);
+  }
   document.addEventListener("focusin", (e) => { if (e.target.matches("input[inputmode]")) setTimeout(() => e.target.select(), 0); });
-  document.addEventListener("focusout", () => setTimeout(render, 50));
+  document.addEventListener("focusout", () => renderQuandoLivre());
   window.addEventListener("hashchange", render);
   S.onChange(render);
   $("#t-menos").onclick = () => Timer.ajustar(-15); $("#t-mais").onclick = () => Timer.ajustar(15); $("#t-parar").onclick = () => Timer.parar();

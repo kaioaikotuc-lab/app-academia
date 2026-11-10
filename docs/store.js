@@ -71,7 +71,7 @@
     get(t, id) { return this.dados[t][id]; },
 
     // --- escrita (local + fila) ---
-    salvar(t, linha) {
+    salvar(t, linha, opcoes = {}) {
       const agora = new Date().toISOString();
       const r = Object.assign({}, this.dados[t][linha.id] || {}, linha);
       if (!r.id) r.id = crypto.randomUUID();
@@ -82,7 +82,7 @@
       this.dados[t][r.id] = r;
       if (!this.fila.some((f) => f.t === t && f.id === r.id)) this.fila.push({ t, id: r.id });
       this.salvarLocal();
-      this.emit();
+      if (!opcoes.silencioso) this.emit(); // silencioso: edição de campo, sem redesenhar a tela
       this.agendarSync();
       return r;
     },
