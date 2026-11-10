@@ -1,0 +1,40 @@
+# Teste ponta a ponta (headless): login, cria ficha modelo, faz um treino, registra peso, confere sync.
+import sys, time
+from playwright.sync_api import sync_playwright
+URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8765/"
+EMAIL, SENHA = "teste.academia.bot@example.com", "Teste12345"
+with sync_playwright() as p:
+    b = p.chromium.launch(channel="chrome", headless=True)
+    pg = b.new_page(viewport={"width": 390, "height": 844})
+    erros = []
+    pg.on("pageerror", lambda e: erros.append(str(e)))
+    pg.on("console", lambda m: m.type == "error" and erros.append(m.text))
+    pg.on("dialog", lambda d: d.accept())
+    pg.goto(URL)
+    pg.fill("input[name=email]", EMAIL); pg.fill("input[name=senha]", SENHA)
+    pg.click("button[value=entrar]")
+    pg.wait_for_selector("nav button.on", timeout=15000)
+    time.sleep(5)
+    pg.click("nav button[data-go=fichas]")
+    if pg.query_selector("[data-act=modelo-abc]"): pg.click("[data-act=modelo-abc]")
+    time.sleep(1)
+    pg.click("nav button[data-go=treinar]")
+    pg.locator("[data-act=iniciar]", has_text="Peito").first.click()
+    pg.wait_for_selector(".serie .check")
+    pg.click(".step button[data-v='2.5']")
+    pg.click(".serie:not(.cab) .check")
+    time.sleep(1.2)
+    print("timer visível:", pg.is_visible("#timer"), pg.inner_text("#timer-txt"))
+    pg.screenshot(path="/workspace/app-academia/tests/sessao.png")
+    pg.click("[data-act=finalizar]")
+    time.sleep(1)
+    pg.screenshot(path="/workspace/app-academia/tests/resumo.png")
+    pg.click("nav button[data-go=perfil]")
+    pg.fill("#novo-peso", "71,5"); pg.click("[data-act=add-peso]")
+    time.sleep(4)
+    pg.screenshot(path="/workspace/app-academia/tests/perfil.png", full_page=True)
+    print("status:", pg.get_attribute("#sync", "class"), pg.get_attribute("#sync", "title"))
+    pg.click("nav button[data-go=progresso]"); time.sleep(0.5)
+    print("evolução:", pg.inner_text("main")[:200].replace("\n", " | "))
+    print("erros:", erros)
+    b.close()

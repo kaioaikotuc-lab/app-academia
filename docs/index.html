@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Academia — Controle de Treino</title>
+  <meta name="description" content="Controle de cargas, séries, repetições e evolução na musculação.">
+  <meta name="theme-color" content="#0f1115">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Academia">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="deslogado">
+  <header><span class="marca">🏋️ Academia</span><span id="sync" class="sync" title="Sincronização"></span></header>
+  <section id="login"></section>
+  <main id="main"></main>
+  <div id="timer"><div id="timer-bar"></div>
+    <button id="t-menos">−15s</button><div><small>Descanso</small><b id="timer-txt">0:00</b></div><button id="t-mais">+15s</button><button id="t-parar">✕</button>
+  </div>
+  <nav>
+    <button data-go="treinar">🏋️<span>Treinar</span></button>
+    <button data-go="fichas">📋<span>Fichas</span></button>
+    <button data-go="historico">📅<span>Histórico</span></button>
+    <button data-go="progresso">📈<span>Evolução</span></button>
+    <button data-go="perfil">👤<span>Perfil</span></button>
+  </nav>
+  <button class="fab-ex" data-go="exercicios" title="Exercícios">📚</button>
+  <div id="modal"></div>
+  <div id="toast"></div>
+  <script src="vendor/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="store.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
