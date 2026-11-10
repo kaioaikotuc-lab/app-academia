@@ -101,6 +101,7 @@
         for (const t of TABELAS) {
           const ids = this.fila.filter((f) => f.t === t).map((f) => f.id);
           if (!ids.length) continue;
+          const versao = Object.fromEntries(ids.map((id) => [id, this.dados[t][id]?.atualizado_em]));
           const linhas = ids.map((id) => this.dados[t][id]).filter(Boolean)
             .filter((r) => r.user_id) // nunca envia a biblioteca padrão
             .map((r) => { const c = { ...r }; delete c._local; delete c.atualizado_em; return c; });
@@ -108,8 +109,10 @@
             const { error } = await sb.from(t).upsert(linhas.slice(i, i + 200), { onConflict: "id", defaultToNull: false });
             if (error) throw error;
           }
-          this.fila = this.fila.filter((f) => !(f.t === t && ids.includes(f.id)));
-          ids.forEach((id) => { if (this.dados[t][id]) delete this.dados[t][id]._local; });
+          // só tira da fila o que não foi editado de novo enquanto o envio acontecia
+          const enviados = ids.filter((id) => this.dados[t][id]?.atualizado_em === versao[id]);
+          this.fila = this.fila.filter((f) => !(f.t === t && enviados.includes(f.id)));
+          enviados.forEach((id) => { if (this.dados[t][id]) delete this.dados[t][id]._local; });
         }
         // 2) baixa o que mudou no servidor (outros aparelhos / chat)
         for (const t of TABELAS) {
@@ -129,6 +132,7 @@
         }
         this.status = "ok";
         this.ultimaSync = new Date();
+        if (this.fila.length) this.agendarSync(300);
       } catch (e) {
         console.error("sync", e);
         this.status = navigator.onLine ? "erro" : "offline";

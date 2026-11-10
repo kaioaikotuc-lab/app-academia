@@ -471,8 +471,16 @@
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); window._promptInstalar = e; });
 
   // ---------- roteamento / render ----------
+  // não redesenha a tela no meio de um toque (senão o botão tocado some e o toque se perde)
+  let tocando = false, renderPendente = false;
+  document.addEventListener("pointerdown", () => { tocando = true; }, true);
+  const soltar = () => setTimeout(() => { tocando = false; if (renderPendente) { renderPendente = false; render(); } }, 0);
+  document.addEventListener("click", soltar, true);
+  document.addEventListener("pointercancel", soltar, true);
+  document.addEventListener("pointerup", () => setTimeout(soltar, 400), true);
   function render() {
     if (!S.user) return;
+    if (tocando) { renderPendente = true; return; }
     const [nome, arg] = (location.hash.slice(1) || "treinar").split("/");
     const fn = telas[nome] || telas.treinar;
     // preserva foco/rolagem ao re-renderizar enquanto digita
